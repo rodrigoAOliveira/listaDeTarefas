@@ -41,6 +41,23 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<Null> _refresh() async {
+    await Future.delayed(Duration(seconds: 1));
+
+    setState(() {
+      _todoList.sort((a, b) {
+        if (a["ok"] && !b["ok"])
+          return 1;
+        else if (!a["ok"] && b["ok"])
+          return -1;
+        else
+          return 0;
+      });
+    });
+
+    return null;
+  }
+
   void _addTodo() {
     setState(() {
       Map<String, dynamic> newTodo = Map();
@@ -83,11 +100,13 @@ class _HomeState extends State<Home> {
             ),
           ),
           Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.only(top: 10),
-                itemCount: _todoList.length,
-                itemBuilder: buildItem,
-              ))
+              child: RefreshIndicator(
+                  child: ListView.builder(
+                    padding: EdgeInsets.only(top: 10),
+                    itemCount: _todoList.length,
+                    itemBuilder: buildItem,
+                  ),
+                  onRefresh: _refresh))
         ],
       ),
     );
@@ -95,10 +114,7 @@ class _HomeState extends State<Home> {
 
   Widget buildItem(context, index) {
     return Dismissible(
-      key: Key(DateTime
-          .now()
-          .millisecondsSinceEpoch
-          .toString()),
+      key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
       background: Container(
         color: Colors.red,
         child: Align(
@@ -133,12 +149,14 @@ class _HomeState extends State<Home> {
 
           final snack = SnackBar(
             content: Text("Tarefa ${_lastRemove["title"]} removida"),
-            action: SnackBarAction(label: "Desfazer", onPressed: () {
-              setState(() {
-                _todoList.insert(_lastItemPos, _lastRemove);
-                _saveData();
-              });
-            }),
+            action: SnackBarAction(
+                label: "Desfazer",
+                onPressed: () {
+                  setState(() {
+                    _todoList.insert(_lastItemPos, _lastRemove);
+                    _saveData();
+                  });
+                }),
             duration: Duration(seconds: 2),
           );
           Scaffold.of(context).showSnackBar(snack);
